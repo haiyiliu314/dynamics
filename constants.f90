@@ -1,4 +1,68 @@
-module constants
+  module constants
   implicit none
-  integer                                          ::gamma = 0.2d12
-end module constants
+  double precision                             ::omegat = sqrt(0.1d0)*1d12
+  integer, parameter                           ::Nt = 5
+  double precision, parameter                  ::f0 = 0d0, t_end = 5, &
+                                               dt = t_end/dble(Nt)
+  integer, parameter                           ::Ny = 100, N_fine = 50, Nphi = 100
+  double precision, parameter                  ::ymax = 4d0, dy = ymax/Ny
+  double precision, parameter                  ::pi = 4d0*atan(1.), hbar = 4.135667662d0/2d0/pi, &
+                                               e = 1.60217662d-19
+  double precision, parameter                  ::Ebind = 4.18d0*e, gamma = 0.38d0*e
+  double precision, parameter                  ::sigmat = 0.15d0, tstart = -3d0*sigmat,& 
+                                               E_excit = 1d-3, shift = 4d0
+  double precision                             ::coul_mat(Ny, Ny), Et, time(Nt+1), y(Ny), &
+                                               y_fine(N_fine), dy_fine
+  contains
+  subroutine constant
+    implicit none
+    integer                                      ::Ndo
+    do Ndo = 1, Nt+1
+      time(Ndo) = (Ndo-1d0)*dt
+    end do
+    do Ndo = 1,Ny
+      y(Ndo) = dy*(Ny - 0.5d0)
+    end do
+    dy_fine = dy/N_fine
+
+  end subroutine constant
+  double precision function Etime(tvia)
+    double precision                             ::tvia
+    Etime = E_excit*dexp(-(tvia*dt+tstart)**2/(sigmat)**2)
+  end function ETime
+
+  subroutine coul_matrix
+    implicit none
+
+    double precision, dimension(Ny)                 ::a, b, c, w1
+    integer                                         ::Ndo, Ndo_in
+    double precision, dimension(N_fine)              ::fine_grid
+    
+    call constant
+    do Ndo = 1, Ny
+      a(Ndo) = Ndo
+    end do
+    do Ndo = 1, N_fine
+      fine_grid(Ndo) = (Ndo-0.5d0)*dy_fine
+    end do
+    b = pi / ( Nphi + 1d0 ) * ( a - ( Nphi + 1d0 ) / (2d0 * pi ) * sin ( (2d0 * pi * a ) / ( Nphi &
+    + 1d0 )))
+    w1 = pi / ( Nphi + 1d0 ) * ( 1d0 - cos( 2d0 * pi * a / ( Nphi + 1d0))) 
+
+    do Ndo = 1, Ny
+      y_fine = y(Ndo) - dy/2d0 + fine_grid
+      do Ndo_in = 1, Nphi
+        coul_mat(:, Ndo)=coul_mat(:,Ndo)+(1/(sqrt(y(Ndo)**2+y**2-2*y*y(Ndo_in)*cos (b(Ndo_in)))))&
+        *2*y*w1(Ndo_in)
+      end do
+      coul_mat(Ndo, Ndo) = 0
+      do Ndo_in = 1, N_fine
+        coul_mat(Ndo,Ndo)=coul_mat(Ndo,Ndo) + sum( 1 / sqrt( y(Ndo) ** 2 + fine_grid(Ndo_in) ** 2 - 2 * fine_grid(Ndo_in) * y&
+        (Ndo) * cos( b ) ) / N_fine * 2 * fine_grid(Ndo_in)  * w1)
+      end do
+    end do
+    coul_mat = coul_mat/pi*dy
+  
+  end subroutine coul_matrix
+
+  end module constants
