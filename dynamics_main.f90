@@ -2,12 +2,12 @@ program main
   use constants
   implicit none
   integer                                                       ::Ndo
-  call constant
+  call constant  
   call coul_matrix
   do Ndo = 1, Nt
     ft(Ndo) = dy*sum(y*f)
     pt(Ndo) = dy*sum(y*p)
-    call RK_pf(f, p, f, p, dble(Ndo))
+    call RK_pf(f, p, f, p, dble(Ndo))  
   end do
     ft(Ndo) = dy*sum(y*f)
     pt(Ndo) = dy*sum(y*p)
@@ -61,7 +61,6 @@ program main
   close(700)
 
 
-
   write(list_file, '(A)') 'coul_mat.dat'           !coul_mat
   open(unit=700,file=list_file)
   write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
@@ -69,5 +68,4 @@ program main
     write(700, format_V) coul_mat(i1, :)
   end do
   close(700)
-
 end program main
