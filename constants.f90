@@ -1,14 +1,14 @@
   module constants
   implicit none
-  integer, parameter                           ::Nt = 500000
-  double precision, parameter                  ::t_end = 25.0d0, &
+  integer, parameter                           ::Nt = 700000
+  double precision, parameter                  ::t_end = 35.0d0, &
                                                dt = t_end/dble(Nt)
   integer, parameter                           ::Ny = 400, N_fine = 50, Nphi = 100
   double precision, parameter                  ::ymax = 40.0d0, dy = ymax/dble(Ny)
   double precision, parameter                  ::pi = 4.0d0*datan(1.0d0), &
                                                hbar = 4.135667662d0/2.0d0/pi, e = 1.60217662d-19
   double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.39d0
-  double precision, parameter                  ::sigmat = 0.15d0, tstart = -10.0d0, & 
+  double precision, parameter                  ::sigmat = 0.15d0, tstart = -5.0d0, & 
                                                E_excit = 1.0d-3, shift = 4.0d0
   double precision                             ::coul_mat(Ny, Ny) = 0.0d0, Et(Nt+1) = 0.0d0, &
                                                time(Nt+1) = 0.0d0, y(Ny)=0.0d0, &
@@ -39,6 +39,13 @@
   end do
   close(100)
   freqgrid = (freqgrid*Ebind+4.0d0*Ebind)/hbar
+  write(list_file, '(A)') 'freqgrid.dat'           !p(t)
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', N_freq, '(", ",SE24.16e3))'
+  do i1 = 1, N_freq
+    write(700, format_V) freqgrid(i1)
+  end do
+  close(700)
   end subroutine readdata
 
   subroutine constant
@@ -142,9 +149,17 @@
     complex*16                                             ::p_via(Ny), p_sum(Ny), test(Ny)
     double precision                                       ::f_via(Ny), f_sum(Ny)
     complex*16                                             ::funcp1(Ny)
+    integer                                                ::num = 1 , i1
     f_sum = matmul(TRANSPOSE(coul_mat), f_via)
     p_sum = matmul(TRANSPOSE(coul_mat), p_via)
     funcp1 = -(0.0d0,1.0d0)*(y*y*p_via - ((2.0d0*f_sum)*p_via) + shift*p_via - (0.0d0,1.0d0) * gamma * p_via/Ebind - (1.0d0-2.0d0*f_via)*(p_sum+Etime(nt_via)))/hbar*Ebind
+    if (nt_via == dble(num)*2500) then
+      write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+      do i1 = 1, Ny
+        write(700, format_V) funcp1(i1)
+      end do
+      num = num+1
+    end if
   end function funcp1
 
   function funcf1(nt_via, p_via)
@@ -196,7 +211,7 @@
     k1 = dt * pt(n) * Ebind * zexp((0.0d0, 1.0d0)*(dt*n)*freqgrid)
     k2 = dt * pt(n) * Ebind * zexp((0.0d0, 1.0d0)*freqgrid*(dt*(n+0.5d0)))
     k3 = dt * pt(n) * Ebind * zexp((0.0d0, 1.0d0)*freqgrid*(dt*(n+0.5d0)))
-    k4 = dt * pt(n+1.0d0) * Ebind * zexp((0.0d0, 1.0d0)*freqgrid*(dt*(n+1.0d0)))
+    k4 = dt * pt(n) * Ebind * zexp((0.0d0, 1.0d0)*freqgrid*(dt*(n+1.0d0)))
     P_out = P_in + k1/6.0d0 +k2/3.0d0 + k3/3.0d0 + k4/6.0d0
   end subroutine RK_P
 
