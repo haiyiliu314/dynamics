@@ -67,12 +67,12 @@ module RK_module
     Pfreq_out = Pfreq_in + kPfreq1/6.0d0 +kPfreq2/3.0d0 + kPfreq3/3.0d0 + kPfreq4/6.0d0
 
     !--------output------------
-    write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
-    do i1 = 1, Ny
-      write(701, format_V) p_out(i1)
-    end do
-    write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', 1, '(", ",SE24.16e3))'
-    write(702, format_V) Etime(n)
+!    write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+!    do i1 = 1, Ny
+!      write(701, format_V) p_out(i1)
+!    end do
+!    write(format_V, '(A12, I6, A18)')   '(SE24.16e3, ', 1, '(", ",SE24.16e3))'
+!    write(702, format_V) Etime(n)
     !--------end output--------
     end subroutine RK
 end module RK_module
