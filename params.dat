@@ -1,0 +1,14 @@
+ time length
+ 0.7000000000000000E+001, 
+ time length for one time step
+ 0.1000000000000000E-002, 
+ number of time steps
+ 0.9809089250273719E-041, 
+ sigma for Gaussiang electrical field
+ 0.1500000000000000E+000, 
+ maximum value of y
+ 0.4000000000000000E+001, 
+ number of finer y points
+ 0.7006492321624085E-043, 
+ number of points for integrating phi
+ 0.1401298464324817E-042, 

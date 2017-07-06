@@ -1,0 +1,9 @@
+
+Timing information
+07-06-17-12:52:50
+
+real	0m4.468s
+user	0m3.288s
+sys	0m1.176s
+
+Short test to make sure code still work before removing RWA.
