@@ -1,6 +1,7 @@
   module constants  
   !07/03/2017 Creation
   !Initialization and calculation of all the constants and global variables 
+  !07/06/2017 Revision remove RWA
   use N_of_grids
   implicit none
 
@@ -8,21 +9,21 @@
   !t_end: whole time
   double precision, parameter                  ::dt = t_end/dble(Nt)           
   !length of one time step
-  double precision, parameter                  ::ymax = 4.0d0, dy = ymax/dble(Ny)  
+  double precision, parameter                  ::ymax = 10.0d0, dy = ymax/dble(Ny)  
   !ymax: maximum value for y   dy: length of one step for y grid
   double precision, parameter                  ::pi = 4.0d0*datan(1.0d0)        
   !physical parameters
   double precision, parameter                  ::hbar = 0.6582119514d0, e = 1.60217662d-19  
   !physical parameters
-  double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.39d0  
-  !Ebind: binding energy(meV)   gamma: dephasing factor (meV)
+  double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.39d0, Eg = 1.49d0  
+  !Ebind: binding energy(meV)   gamma: dephasing factor (meV) Eg: ground state energy
   double precision, parameter                  ::sigmat = 0.15d0, tstart = -1.0d0  
   !sigmat: sigma for gaussian pulse(E(t) = exp(-t^2/sigmat^2))(ps)   tstart: starting point for time (ps)
   double precision, parameter                  ::E_excit = 1.0d-3, shift = 3.0d0 
   !E_excit: excitation level(unit: binding energy)  shift: shift caused by rotation frame (unit: binding energy)
   double precision                             ::coul_mat(Ny, Ny) = 0.0d0, Et(Nt+1) = 0.0d0
   !coul_mat: Coulomb matrix(non-symmetric)(unit: binding energy) Et: electrical field for excitation
-  double precision                             ::y(Ny)=0.0d0     
+  double precision                             ::y(Ny)=0.0d0, omega_1s = (Ebind + Eg)/hbar     
   !y: grid for y
   double precision                             ::y_fine(N_fine) = 0.0d0, dy_fine, f(Ny) = 0.0d0
   !y_fine: finer grid for removal of singularity   dy_fine: length of one step of finer grid for removal of ringularity  f:density
