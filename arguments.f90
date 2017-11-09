@@ -4,28 +4,42 @@
   use N_of_grids
   implicit none
 
-  double precision, parameter                  ::t_end = 5d0            
+  double precision, parameter                  ::t_end = 10d0            
   !t_end: whole time
 !  integer                                      ::m(2*Nm_o+1) = 0
 !  !m: order of circular harmonics
   double precision, parameter                  ::ymax = 10.0d0, dy = ymax/dble(Ny) 
   !ymax: maximum value for y   dy: length of one step for y grid
-  double precision, parameter                  ::sigmat = 0.3d0, tstart = -1d0,&
-                                                 sigmat_A = 0.1d0, tstart_A = -1.2d0  
+  double precision, parameter                  ::sigmat = 0.3d0, tstart = -2d0,&
+                                                 sigmat_A = 0.1d0, tstart_A = -2.5d0  
   !sigmat: sigma for gaussian pulse(E(t) = exp(-t^2/sigmat^2))(ps)   tstart: starting point for
   !time (ps) 
   double precision, parameter                  ::pi = 4.0d0*datan(1.0d0)        
   !physical parameters
   double precision, parameter                  ::hbar = 0.6582119514d0, e = 1.60217662d-19  
   !physical parameters
-  double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.5d0, Eg = 1.50d3, A_freq_para = (4d0-4d0/9d0)*Ebind 
+  double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.39d0, Eg = 1.50d3, A_freq_para = (4d0-4d0/9d0)*Ebind 
   !Ebind: binding energy(meV)   gamma: dephasing factor (meV) Eg: ground state energy
   double precision, parameter                  ::dt = t_end/dble(Nt)           
   !length of one time step
-  double precision, parameter                  ::E_excit = 1.0d-3, A_excit = 1d-2/Ebind, shift = 4.0d0
+  double precision, parameter                  ::E_excit = 1.0d-4, A_excit = 1d-2/Ebind, shift = 4.0d0
   !E_excit: excitation level(unit: binding energy)  shift: shift caused by rotation frame 
   !(unit: binding energy)
-  double precision                             ::coul_mat(Nm_o+1, Ny, Ny) = 0.0d0, Et(Nt+1) = 0.0d0
+!-------------------LAPACK-----------------------
+  integer, parameter                           ::LDA = Ny, LDVL = Ny, LDVR = Ny
+  integer, parameter                           ::LWMAX = 10000
+  integer                                      ::INFO, LWORK
+  double precision                             ::RWORK(2*Ny)
+  complex*16                                   ::A( LDA, Ny ), VL( LDVL, Ny ), VR( LDVR, Ny ),&
+                                                 W( Ny ), WORK( LWMAX ), VL1( LDVL, Ny ), &
+                                                 VR1( LDVR, Ny ), W1( Ny ), A1( LDA, Ny ), &
+                                                 VR_temp(LDVR, Ny), VL_temp(LDVL, Ny), &
+                                                 VL2( LDVL, Ny ), VR2( LDVR, Ny ), &
+                                                 W2( Ny ), A2( LDA, Ny )
+  character                                    ::YES = 'V',NO = 'N'
+!-------------------end LAPACK-----------------------
+  double precision                             ::coul_mat(Nm_o+1, Ny, Ny) = 0.0d0, Et(Nt+1) = 0.0d0, &
+                                                 Etemp(Ny), Etemp1(Ny), Emax
   !coul_mat: Coulomb matrix(non-symmetric)(unit: binding energy) Et: electrical field 
   !for excitation
   double precision                             ::y(Ny)=0.0d0, omega_1s = (-4d0*Ebind + Eg)/hbar     
@@ -34,7 +48,10 @@
   !y_fine: finer grid for removal of singularity   dy_fine: length of one step of finer grid for
   !removal of ringularity  f:density
   complex*16                                   ::p(2*Nm_o+1, Ny) = 0.0d0, &
-                                                 f(2*Nm_o+1, Ny) = 0.0d0, coup(Ny)                 
+                                                 f(2*Nm_o+1, Ny) = 0.0d0, coup(Ny),&
+                                                 p_proj(Nt_RWA, Ny), p_proj1(Nt_RWA, Ny), &
+                                                 p_proj2(Nt_RWA, Ny), p_proj11(Nt_RWA, Ny), &
+                                                 p_proj22(Nt_RWA, Ny)                
   !p: polarization   f: density		coup: magnetism coupling term
   complex*16                                   ::pt(2*Nm_o+1) = 0.0d0, &
                                                  ft(2*Nm_o+1) = 0.0d0, &
