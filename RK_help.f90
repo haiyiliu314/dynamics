@@ -10,13 +10,11 @@
   subroutine readdata
   !07/03/2017 creation
   !import the grid of frequency grid Ben used, to make sure we are using the same frequency grid
-  !08/20/2017 revision
-  !generate a frequency grid from 1 to 9 binding energy
   integer                                        ::i1
   character(len = 100)                           ::format_V
   !i1: do loop parameter
   !format_V: viarable for output format
-  !--------set frequence grid, from 1 E_B to 9 E_B ---
+  !--------set frequence grid, from 1 meV to 9meV---
   do i1 = 1,N_freq
     freqgrid(i1) =1d0+0.01d0*i1-0.005d0
   end do
@@ -37,8 +35,8 @@
   !function for calculating electrical field(unit: binding energy)
     double precision                             ::tvia                         
     !tvia: time step(converted into double precision)
-!    Etime = E_excit*exp(-((tvia)*dt+tstart)*((tvia)*dt+tstart)/(sigmat*sigmat)) * (1d0 + exp(-(0d0,1d0)*2d0*omega_1s*(tvia*dt+tstart)))!no E_bind non RWA
-    Etime = E_excit*exp(-((tvia)*dt+tstart)*((tvia)*dt+tstart)/(sigmat*sigmat)) * (1d0 + 0d0*exp(-(0d0,1d0)*2d0*omega_1s*(tvia*dt+tstart)))!no E_bind   RWA
+    Etime = E_excit*exp(-((tvia)*dt+tstart)*((tvia)*dt+tstart)/(sigmat*sigmat)) * (1d0 + exp(-(0d0,1d0)*2d0*omega_1s*tvia))!no E_bind non RWA
+!    Etime = E_excit*exp(-((tvia)*dt+tstart)*((tvia)*dt+tstart)/(sigmat*sigmat)) * (1d0 + 0d0*exp(-(0d0,1d0)*2d0*omega_1s*tvia))!no E_bind   RWA
   end function Etime
 
   complex*16 function Atime(tvia)
@@ -47,8 +45,7 @@
     double precision                             ::tvia                         
     !tvia: time step(converted into double precision)
 !    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*cos(A_freq_para*(tvia*dt+tstart_A)/hbar)*Ebind*2d0
-!    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*(exp((0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar)+exp(-(0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar))*Ebind        ! unit:meV    
-    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*cos((A_freq_para)*(tvia*dt+tstart_A)/hbar)*Ebind        ! unit:meV                    
+    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*(exp((0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar)+exp(-(0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar))*Ebind        ! unit:meV                    
   end function Atime
 
 
