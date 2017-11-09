@@ -4,7 +4,7 @@
   use N_of_grids
   implicit none
 
-  double precision, parameter                  ::t_end = 1d0            
+  double precision, parameter                  ::t_end = 1.2d0            
   !t_end: whole time
 !  integer                                      ::m(2*Nm_o+1) = 0
 !  !m: order of circular harmonics
@@ -18,7 +18,7 @@
   !physical parameters
   double precision, parameter                  ::hbar = 0.6582119514d0, e = 1.60217662d-19  
   !physical parameters
-  double precision, parameter                  ::Ebind = 4.18d0, gamma = 4d0*0.39d0, Eg = 1.50d3,&
+  double precision, parameter                  ::Ebind = 4.18d0, gamma = 0.39d0, Eg = 1.50d3,&
                                                  A_freq_para = (4d0-4d0/9d0)*Ebind 
   !Ebind: binding energy(meV)   gamma: dephasing factor (meV) Eg: ground state energy
   double precision, parameter                  ::dt = t_end/dble(Nt)           
@@ -35,7 +35,8 @@
   !for excitation
   double precision                             ::y(Ny)=0.0d0, omega_1s = (-4d0*Ebind + Eg)/hbar     
   !y: grid for y
-  double precision                             ::y_fine(N_fine) = 0.0d0, dy_fine
+  double precision                             ::y_fine(N_fine) = 0.0d0, dy_fine, Etemp(Ny), &
+                                                 Etemp1(Ny), Emax
   !y_fine: finer grid for removal of singularity   dy_fine: length of one step of finer grid for
   !removal of ringularity  f:density
 !-------------------LAPACK-----------------------
@@ -44,7 +45,8 @@
   double precision                             ::RWORK(2*Ny)
   complex*16                                   ::A( LDA, Ny ), VL( LDVL, Ny ), VR( LDVR, Ny ),&
                                                  W( Ny ), WORK( LWMAX ), VL1( LDVL, Ny ), &
-                                                 VR1( LDVR, Ny ), W1( Ny ), A1( LDA, Ny )
+                                                 VR1( LDVR, Ny ), W1( Ny ), A1( LDA, Ny ), &
+                                                 VR_temp(LDVR, Ny), VL_temp(LDVL, Ny)
   character                                    ::YES = 'V',NO = 'N'
 !-------------------LAPACK-----------------------
   complex*16                                   ::p(2*Nm_o+1, Ny) = 0.0d0, &
@@ -52,7 +54,8 @@
                                                  p_proj(Ny), J_tran(Ny, Ny), J_tran1(Ny, Ny), &
                                                  resp(Ny, Ny, N_freq), &
                                                  resp1(Ny, Ny, N_freq), summ(N_freq), &
-                                                 ana_ses(N_freq)                 
+                                                 ana_ses(N_freq), p_proj1(Ny), &
+                                                 J_tran2(Ny, Ny)              
   !p: polarization   f: density		coup: magnetism coupling term
   complex*16                                   ::pt(2*Nm_o+1) = 0.0d0, &
                                                  ft(2*Nm_o+1) = 0.0d0, &

@@ -16,7 +16,7 @@ program main
   use RK_module
   use params
   implicit none
-  integer                                                       ::Ndo, Ndo_m, i2, Ndo_in, Ndo_in1
+  integer                                                       ::Ndo, Ndo_m, i2, Ndo_in, Ndo_in1, ipiv(Ny)
   call constant  
   call coul_matrix
   call readdata
@@ -49,13 +49,14 @@ program main
     call RK(E_freq, p_freq, f, p, dble(Ndo), A_freq, J_THZ_freq, &              !input
             E_freq, p_freq, f, p, A_freq, J_THZ_freq)                           !output
     write(702, format_V1) real(Etime(dble(Ndo)))
-    do i1 = 1, 2*Nm_o+1
-      write(701, format_V) real(p(i1, :))
-    end do
+
     write(705, format_V3) real(Atime(dble(Ndo-1))), aimag(Atime(dble(Ndo)))
     write(706, format_V3) real(J_THZ_t), aimag(J_THZ_t)
   end do
-
+  do Ndo = 1, (2*Nm_o+1)
+      write(701, format_V) real(p(Ndo, :))
+      write(701, format_V) aimag(p(Ndo, :))
+  end do
   close(700)
   close(701)
   close(704)
@@ -80,58 +81,116 @@ program main
   do i2 = 1, Ny
     A1(i2, i2) = A1(i2, i2) + y(i2)*y(i2)
   end do 
-  CALL ZGEEV(YES, YES, Ny, A1, LDA, W, VL, LDVL,&
-             VR, LDVR, WORK, LWORK, RWORK, INFO )
+  CALL ZGEEV(YES, YES, Ny, A1, LDA, W1, VL1, LDVL,&
+             VR1, LDVR, WORK, LWORK, RWORK, INFO )
   LWORK = min( LWMAX, int( WORK( 1 ) ) )
   CALL ZGEEV(YES, YES, Ny, A1, LDA, W1, VL1, LDVL,&
              VR1, LDVR, WORK, LWORK, RWORK, INFO )
-
-  do Ndo = 1, Ny
-    VL(:, Ndo) = VL(:, Ndo)/sqrt(real(sum(y*VL(:, Ndo)*conjg(VL(:, Ndo))))*dy*2d0*pi)
-    VL1(:, Ndo) = VL1(:, Ndo)/sqrt(real(sum(y*VL1(:, Ndo)*conjg(VL1(:, Ndo))))*dy*2d0*pi)
-  end do
-  do Ndo = 1, Ny
-    VR(:, Ndo) = VR(:, Ndo)/sqrt(real(sum(y*VR(:, Ndo)*conjg(VR(:, Ndo))))*dy*2d0*pi)
-    VR1(:, Ndo) = VR1(:, Ndo)/sqrt(real(sum(y*VR1(:, Ndo)*conjg(VR1(:, Ndo))))*dy*2d0*pi)
-  end do
 !---------------end eigen vectors -------------------- 
 
+!---------------sorting-------------------------------
+  Etemp = real(W)
+  Emax = maxval(Etemp)
+  write(*,*)  minval(Etemp, 1)
+  do Ndo = 1, Ny
+    i2 = minloc(Etemp, 1)
+    Etemp1(Ndo) = minval(Etemp, 1)
+    VR_temp(:,Ndo) = VR(:,i2)
+    Etemp(i2) = Emax+1d0
+  end do
+  W = Etemp1
+  VR = VR_temp
+  Etemp = real(W1)
+  Emax = maxval(Etemp)
+  do Ndo = 1, Ny
+    i2 = minloc(Etemp, 1)
+    Etemp1(Ndo) = minval(Etemp, 1)
+    VR_temp(:,Ndo) = VR1(:,i2)
+    Etemp(i2) = Emax+1d0
+  end do
+  W1 = Etemp1
+  VR1 = VR_temp
+
+  write(list_file, '(A)') 'eigenvectors_L.dat'       !eigen vectors
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+    do i2 = 1, Ny
+      write(700, format_V) real(VL(:,i2))
+    end do
+  close(700)
+
+  write(list_file, '(A)') 'eigenvectors_m1_L.dat'       !eigen vectors
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+    do i2 = 1, Ny
+      write(700, format_V) real(VL1(:,i2))
+    end do
+  close(700)
+!-----------end sorting-------------------------------
+!---------------Normalization-------------------------
+  do Ndo = 1, Ny
+    VL(:, Ndo) = VL(:, Ndo)/sqrt(real(sum(y*VL(:, Ndo)*conjg(VL(:, Ndo))))*dy/2d0/pi)
+    VL1(:, Ndo) = VL1(:, Ndo)/sqrt(real(sum(y*VL1(:, Ndo)*conjg(VL1(:, Ndo))))*dy/2d0/pi)
+  end do
+  do Ndo = 1, Ny
+    VR(:, Ndo) = VR(:, Ndo)/sqrt(real(sum(y*VR(:, Ndo)*conjg(VR(:, Ndo))))*dy/2d0/pi)
+    VR1(:, Ndo) = VR1(:, Ndo)/sqrt(real(sum(y*VR1(:, Ndo)*conjg(VR1(:, Ndo))))*dy/2d0/pi)
+  end do
+
+  VL1 = VR1
+  VL =VR
+!-----------end normalization-------------------------
 !---------------analytical susceptibility-------------
+
   !calculate p(0)
-  p_proj = matmul(p(Nm_o+1, :)*y, VL)*dy*2d0*pi
+  p_proj = matmul(p(Nm_o+1, :)*y, VL)*dy/2d0/pi
+!  p_proj1 = matmul(p(Nm_o+1, :)*y, VR1)*dy/2d0/pi
   !calculate transition matrix of J
   do Ndo = 1, Ny
     do Ndo_in = 1, Ny
-      J_tran(Ndo, Ndo_in) = (2d0*pi)*sum(VL1(:,Ndo)*y*y*VR(:,Ndo_in))*dy
-      J_tran1(Ndo, Ndo_in) = (2d0*pi)*sum(VL(:,Ndo)*y*y*VR1(:,Ndo_in))*dy
+      J_tran(Ndo, Ndo_in) = 1d0/(2d0*pi)*sum(conjg(VL1(:,Ndo))*y*y*VR(:,Ndo_in))*dy
+      J_tran1(Ndo, Ndo_in) = 1d0/(2d0*pi)*sum(conjg(VL(:,Ndo))*y*y*VR1(:,Ndo_in))*dy
+!      J_tran2(Ndo, Ndo_in) = 1/(2d0*pi)*sum((VR(:,Ndo))*y*y*VR(:,Ndo_in))*dy
     end do
-  end do 
+  end do
+
   !calculate S
   resp = 0d0
   resp1 = 0d0
   do Ndo = 1, Ny   !lambda
     do Ndo_in = 1, Ny   !nu
       do Ndo_in1 = 1, Ny   !beta
-        resp(Ndo, Ndo_in, :) = resp(Ndo, Ndo_in, :)+(W(Ndo_in1) - W(Ndo))*Ebind&
+        resp(Ndo, Ndo_in, :) = resp(Ndo, Ndo_in, :)+(W1(Ndo_in1) - W(Ndo))*Ebind&
                              *J_tran1(Ndo_in, Ndo_in1)&
-                             *J_tran(Ndo_in1, Ndo)  /  ((W(Ndo_in1) - W(Ndo))*Ebind - freqgrid*hbar&
-                             -2d0*(0d0, 1d0)*gamma)*p_proj(Ndo_in)*conjg(p_proj(Ndo))
-        resp1(Ndo, Ndo_in, :) = resp1(Ndo, Ndo_in, :)+(W(Ndo_in1) - W(Ndo))*Ebind&
+                             *J_tran(Ndo_in1, Ndo)  /  ((W1(Ndo_in1) - W(Ndo))*Ebind - freqgrid*hbar&
+                             -2d0*(0d0, 1d0)*gamma) 
+       resp1(Ndo, Ndo_in, :) = resp1(Ndo, Ndo_in, :)+(W1(Ndo_in1) - W(Ndo))*Ebind&
                               *J_tran1(Ndo_in, Ndo_in1)&
-                              *J_tran(Ndo_in1, Ndo)  /  ((W(Ndo_in1) - W(Ndo))*Ebind + freqgrid*hbar&
-                              -2d0*(0d0, 1d0)*gamma)*p_proj(Ndo_in)*conjg(p_proj(Ndo))
+                              *J_tran(Ndo_in1, Ndo)  /  ((W1(Ndo_in1) - W(Ndo))*Ebind + freqgrid*hbar&
+                              -2d0*(0d0, 1d0)*gamma)  
+
+
+!        resp(Ndo, Ndo_in, :) = resp(Ndo, Ndo_in, :)+(W1(Ndo_in1) - W(Ndo))*Ebind&
+!                             *J_tran1(Ndo_in, Ndo_in1)&
+!                             *J_tran2(Ndo_in, Ndo)  /  ((W(Ndo_in) - W(Ndo))*Ebind - freqgrid*hbar&
+!                             -2d0*(0d0, 1d0)*gamma)*p_proj(Ndo_in)*conjg(p_proj1(Ndo_in1))
+!        resp1(Ndo, Ndo_in, :) = resp1(Ndo, Ndo_in, :)+(W1(Ndo_in1) - W(Ndo))*Ebind&
+!                              *J_tran1(Ndo_in, Ndo_in1)&
+!                              *J_tran2(Ndo_in, Ndo)  /  ((W(Ndo_in) - W(Ndo))*Ebind + freqgrid*hbar&
+!                              -2d0*(0d0, 1d0)*gamma)*p_proj(Ndo_in)*conjg(p_proj1(Ndo_in1))
       end do
     end do
   end do
+
   !calculate summation in (4.21)
   summ = 0d0
   do Ndo = 1, Ny  !lambda
     do Ndo_in = 1, Ny  !nu
-      summ = summ + resp(Ndo, Ndo_in, :) - conjg(resp1(Ndo, Ndo_in, :))
+      summ = summ + (resp(Ndo, Ndo_in, :)  *p_proj(Ndo_in)*conjg(p_proj(Ndo))- conjg(resp1(Ndo, Ndo_in, :)*p_proj(Ndo_in)*conjg(p_proj(Ndo))))
     end do
   end do
   !calculate susceptibility
-  ana_ses = summ/(freqgrid*freqgrid*(hbar*freqgrid+(0d0, 1d0)*gamma))
+  ana_ses = summ/(freqgrid*freqgrid*(hbar*freqgrid+ (0d0, 1d0)*gamma))
 !-----------end analytical susceptibility-------------
 
 !-------------------output--------------------
@@ -184,13 +243,7 @@ program main
     end do
   close(700)
 
-  write(list_file, '(A)') 'eigenvectors_L.dat'       !eigen vectors
-  open(unit=700,file=list_file)
-  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
-    do i2 = 1, Ny
-      write(700, format_V) real(VL(:,i2))
-    end do
-  close(700)
+
 
   write(list_file, '(A)') 'eigenvalues.dat'       !eigen values
   open(unit=700,file=list_file)
@@ -206,13 +259,7 @@ program main
     end do
   close(700)
 
-  write(list_file, '(A)') 'eigenvectors_m1_L.dat'       !eigen vectors
-  open(unit=700,file=list_file)
-  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
-    do i2 = 1, Ny
-      write(700, format_V) real(VL1(:,i2))
-    end do
-  close(700)
+
 
   write(list_file, '(A)') 'eigenvalues_m1.dat'       !eigen values
   open(unit=700,file=list_file)
@@ -226,6 +273,34 @@ program main
       write(700, format_V) aimag(ana_ses)
   close(700)
 
+  write(list_file, '(A)') 'j_tran.dat'       !eigen values
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+    do i2 = 1, Ny
+      write(700, format_V) abs(J_tran(i2,:))*abs(J_tran(i2,:))
+    end do
+  close(700)
+
+  write(list_file, '(A)') 'resp.dat'       !eigen values
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', N_freq, '(", ",SE24.16e3))'
+      write(700, format_V) abs(resp(1, 1,:))
+  close(700)
+
+  write(list_file, '(A)') 'j_tran1.dat'       !eigen values
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+    do i2 = 1, Ny
+      write(700, format_V) abs(J_tran1(i2,:))*abs(J_tran1(i2,:))
+    end do
+  close(700)
+
+  write(list_file, '(A)') 'p_proj.dat'       !eigen values
+  open(unit=700,file=list_file)
+  write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', Ny, '(", ",SE24.16e3))'
+      write(700, format_V) real(p_proj)
+      write(700, format_V) aimag(p_proj)
+  close(700)
 !----------------end output------------------
   call output_params
 end program main

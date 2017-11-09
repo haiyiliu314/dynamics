@@ -14,7 +14,7 @@
   character(len = 100)                           ::format_V
   !i1: do loop parameter
   !format_V: viarable for output format
-  !--------set frequence grid, from 1 meV to 9meV---
+  !--------set frequence grid, from 1 E_Binding to 9 E_Binding---
   do i1 = 1,N_freq
     freqgrid(i1) =1d0+0.01d0*i1-0.005d0
   end do
@@ -44,7 +44,9 @@
     double precision                             ::tvia                         
     !tvia: time step(converted into double precision)
 !    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*cos(A_freq_para*(tvia*dt+tstart_A)/hbar)*Ebind*2d0
-    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))*(exp((0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar)+exp(-(0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar))*Ebind        ! unit:meV                    
+    Atime = A_excit*exp(-((tvia)*dt+tstart_A)*((tvia)*dt+tstart_A)/(sigmat_A*sigmat_A))&
+            *(exp((0d0, 1d0)*A_freq_para*(tvia*dt+tstart_A)/hbar)+exp(-(0d0, 1d0)&
+            *A_freq_para*(tvia*dt+tstart_A)/hbar))*Ebind        ! unit:meV                    
   end function Atime
 
 
@@ -69,6 +71,7 @@
     !kE_out, kPfreq_out, kA_out, kJ_out: output parameters for Runge-Kutta methods
     integer                                                ::Ndo_m, Ndo_m1, Ndo_phi
     !Ndo_m, Ndo_m1: arguments for do loops, indices of m and m'
+    integer                                                ::logic, logic1
     complex*16                                             ::p_sum_part(Ny), &
                                                              f_sum_part(Ny), &
                                                              pp_sum(Ny), &
@@ -121,14 +124,15 @@
         else if(Ndo_m == 2*Nm_o+1) then
         coup = (p_via(Ndo_m-1, :))/2d0
       end if
-
+      logic = (Ndo_m == (Nm_o+1))
+      logic1 = (Ndo_m /= Nm_o+1)
       p_sum_part_m = matmul(p_via(Ndo_m, :), coul_mat(abs(Ndo_m-Nm_o-1)+1, :, :))
-      p_out(Ndo_m, :) = -(0.0d0,1.0d0)*(y*y*p_via(Ndo_m, :) - 2.0d0*pf_sum - y*Atime(nt_via)*coup+&
+      p_out(Ndo_m, :) = -(0.0d0,1.0d0)*(y*y*p_via(Ndo_m, :) - 2.0d0*pf_sum - 0d0*y*Atime(nt_via)*coup+&
                         shift*p_via(Ndo_m, :) - (0.0d0,1.0d0) * gamma * p_via(Ndo_m, :)/Ebind -&
-                        ((abs(dble(Ndo_m == (Nm_o+1)))-2.0d0*f_via(Ndo_m, :)) *Etime(nt_via)+&
+                        ((abs(dble(logic))-2.0d0*f_via(Ndo_m, :)) *Etime(nt_via)+&
                         (p_sum_part_m - 2.0d0*fp_sum) ) )/hbar*Ebind*dt
       f_out(Ndo_m, :) = (Etime(nt_via)*(p_via(Ndo_m, :) - conjg(p_via((2*Nm_o+2)-Ndo_m, :))) &
-                        +(pp_sum_plus-pp_sum)- (0.0d0,1.0d0) *(dble(Ndo_m==Nm_o+1)+1)*gamma * f_via(Ndo_m, :)/Ebind)&
+                        +(pp_sum_plus-pp_sum)- (0.0d0,1.0d0) *(abs(dble(logic1)))*gamma * f_via(Ndo_m, :)/Ebind)&
                         /hbar*Ebind*dt/(0.0d0, 1.0d0)
     end do
     J_THZ_t1 = 0d0

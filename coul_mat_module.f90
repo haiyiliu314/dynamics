@@ -37,14 +37,17 @@ module coul_mat_module
         !calculate the finer grid for diagonal terms
 !------------calculate the Coulomb matrix without removal of singularity-------------
         do Ndo_in = 1, Nphi
-          coul_mat(Ndo_m, :, Ndo)=coul_mat(Ndo_m, :, Ndo)+(1.0d0/(dsqrt(y(Ndo)*y(Ndo)+y*y -2.0d0*y*y(Ndo)*dcos(b(Ndo_in)))))*2.0d0*y*w1(Ndo_in)*dcos(dble(Ndo_m-1)*b(Ndo_in))
+          coul_mat(Ndo_m, :, Ndo)=coul_mat(Ndo_m, :, Ndo)+(1.0d0/(dsqrt(y(Ndo)*y(Ndo)+y*y &
+          -2.0d0*y*y(Ndo)*dcos(b(Ndo_in)))))*2.0d0*y*w1(Ndo_in)*dcos(dble(Ndo_m-1)*b(Ndo_in))
         end do
 !-----------end calculation----------------------------------------------------------
         coul_mat(Ndo_m, Ndo, Ndo) = 0.0d0     
        !eliminate the diagonal terms and calculate them as followed
 !-----------calculate the diagonal terms with removal of singularity---------------------
         do Ndo_in = 1, N_fine    
-          coul_mat(Ndo_m, Ndo,Ndo)=coul_mat(Ndo_m, Ndo, Ndo) + sum( 1.0d0/ dsqrt( y(Ndo) *y(Ndo) + y_fine(Ndo_in) *y_fine(Ndo_in) - 2.0d0 * y_fine(Ndo_in) * y(Ndo) * dcos( b ) ) / dble(N_fine) * 2.0d0 *y_fine(Ndo_in) * w1* dcos( dble(Ndo_m-1)*b ))
+          coul_mat(Ndo_m, Ndo,Ndo)=coul_mat(Ndo_m, Ndo, Ndo) + sum( 1.0d0/ dsqrt( y(Ndo) *y(Ndo) &
+          + y_fine(Ndo_in) *y_fine(Ndo_in) - 2.0d0 * y_fine(Ndo_in) * y(Ndo) * dcos( b ) ) &
+          / dble(N_fine) * 2.0d0 *y_fine(Ndo_in) * w1* dcos( dble(Ndo_m-1)*b ))
         end do  
 !-----------end calculation-----------------------------------------------------------
       end do
