@@ -133,7 +133,7 @@
         else if(Ndo_m == 2*Nm_o+1) then
         coup = (p_via(Ndo_m-1, :))/2d0
       end if
-      coup = 0d0
+      coup =0d0
       p_sum_part_m = matmul(p_via(Ndo_m, :), coul_mat(abs(Ndo_m-Nm_o-1)+1, :, :))
       p_out(Ndo_m, :) = -(0.0d0,1.0d0)*(y*y*p_via(Ndo_m, :) - 2.0d0*pf_sum - y*Atime(nt_via)*coup+&
                         shift*p_via(Ndo_m, :) - (0.0d0,1.0d0) * gamma * p_via(Ndo_m, :)/Ebind -&
