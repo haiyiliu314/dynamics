@@ -10,20 +10,19 @@ module params
     write(list_file1, '(A)') 'params.dat'    
   write(format_V, '(A12, I4, A18)')   '(SE24.16e3, ', 1, '(", ",SE24.16e3))'   
     open(unit=600,file=list_file1)  
-    write(600, *) 'time length' 
+    write(600, *) 'Time length(ps)' 
     write(600, format_V) t_end
-    write(600, *) 'time length for one time step' 
-    write(600, format_V) dt   
-    write(600, *) 'number of time steps' 
-    write(600, format_V) Nt
-    write(600, *) 'sigma for Gaussiang electrical field' 
-    write(600, format_V) sigmat
+    write(600, *) 'dt(as)' 
+    write(600, format_V) dt*1d6   
+    write(600, *) 'Number of time steps' 
+    write(600, *) Nt
     write(600, *) 'maximum value of y' 
     write(600, format_V) ymax
-    write(600, *) 'number of finer y points' 
-    write(600, format_V) N_fine
-    write(600, *) 'number of points for integrating phi' 
-    write(600, format_V) Nphi
-    close(600)
+    write(600, *) 'Peak of electrical field(MV/cm)' 
+    write(600, format_V) A_excit*Ebind*1.129572800243224d3/50d0
+    write(600, *) 'dephasing(meV)'
+    write(600, *) gamma
+    write(600, *) 'time for one cycle(fs)'
+    write(600, *) 2d0*pi/A_freq_para
   end subroutine output_params
 end module params
